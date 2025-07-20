@@ -1,0 +1,93 @@
+import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:provider/provider.dart';
+
+import 'firebase_options.dart';
+import 'utils/app_theme.dart';
+import 'utils/theme_provider.dart'; // Tambahkan ini
+import 'services/preference_service.dart';
+
+import 'screens/onboarding/onboarding_screen.dart';
+import 'screens/auth/login_screen.dart';
+import 'screens/home/dashboard_screen.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  runApp(const FitTrackApp());
+}
+
+class FitTrackApp extends StatelessWidget {
+  const FitTrackApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider(
+      create: (_) => ThemeProvider(),
+      builder: (context, _) {
+        final themeProvider = Provider.of<ThemeProvider>(context);
+        return MaterialApp(
+          debugShowCheckedModeBanner: false,
+          title: 'FitTrack',
+          themeMode: themeProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+          theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
+          home: const RootPage(),
+        );
+      },
+    );
+  }
+}
+
+class RootPage extends StatefulWidget {
+  const RootPage({super.key});
+
+  @override
+  State<RootPage> createState() => _RootPageState();
+}
+
+class _RootPageState extends State<RootPage> {
+  late Future<Widget> _checkStatus;
+
+  Future<Widget> _determineStartPage() async {
+    bool seenOnboarding = await PreferenceService.getOnboardingSeen() ?? false;
+    bool isLoggedIn = await PreferenceService.getLoginStatus() ?? false;
+
+    if (!seenOnboarding) {
+      return const OnboardingScreen();
+    } else if (!isLoggedIn) {
+      return const LoginScreen();
+    } else {
+      return const DashboardScreen();
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _checkStatus = _determineStartPage();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<Widget>(
+      future: _checkStatus,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        } else if (snapshot.hasData) {
+          return snapshot.data!;
+        } else {
+          return const Scaffold(
+            body: Center(child: Text("Something went wrong")),
+          );
+        }
+      },
+    );
+  }
+}
+
