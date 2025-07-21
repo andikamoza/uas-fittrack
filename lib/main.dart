@@ -11,6 +11,9 @@ import 'screens/onboarding/onboarding_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/home/dashboard_screen.dart';
 
+import 'package:fittrack/services/preference_service.dart';
+
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(

@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import '../../services/preference_service.dart';
 import '../home/dashboard_screen.dart';
 
+import 'package:fittrack/services/preference_service.dart'; // ← Tambahkan ini
+
+
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
 

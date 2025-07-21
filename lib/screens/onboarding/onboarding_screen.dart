@@ -3,6 +3,8 @@ import 'package:lottie/lottie.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../auth/login_screen.dart';
+import '../preference/preference_screen.dart';
+import '../../services/preference_service.dart';
 import '../../utils/constants.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -41,14 +43,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         curve: Curves.easeInOut,
       );
     } else {
-      _goToLogin();
+      _goToPreference();
     }
   }
 
-  void _goToLogin() {
+  void _goToPreference() async {
+    await PreferenceService.setOnboardingSeen(true);
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (_) => const LoginScreen()),
+      MaterialPageRoute(builder: (_) => const PreferenceScreen()),
     );
   }
 
@@ -106,7 +109,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             right: 20,
             child: IconButton(
               icon: const Icon(Icons.arrow_forward_ios_rounded, color: kPrimaryColor),
-              onPressed: _goToLogin,
+              onPressed: _goToPreference,
               tooltip: "Skip",
             ),
           ),
