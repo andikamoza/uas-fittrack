@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../services/preference_service.dart';
@@ -10,35 +11,14 @@ class PreferenceScreen extends StatefulWidget {
   State<PreferenceScreen> createState() => _PreferenceScreenState();
 }
 
-class _PreferenceScreenState extends State<PreferenceScreen>
-    with SingleTickerProviderStateMixin {
+class _PreferenceScreenState extends State<PreferenceScreen> {
   String? goal;
   String? activityLevel;
   String? workoutTime;
 
-  late AnimationController _controller;
-  late Animation<double> _fadeIn;
-
-  final List<String> goals = ['Lose weight', 'Stay fit', 'Gain muscle'];
-  final List<String> activityLevels = ['Sedentary', 'Active', 'Very active'];
-  final List<String> workoutTimes = ['Morning', 'Afternoon', 'Night'];
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1200),
-    );
-    _fadeIn = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
-    _controller.forward();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
+  final List<String> goals = ['Lose Weight', 'Stay Fit', 'Build Muscle'];
+  final List<String> activityLevels = ['Sedentary', 'Active', 'Very Active'];
+  final List<String> workoutTimes = ['Morning', 'Evening', 'Night'];
 
   void _savePreferences() async {
     if (goal != null && activityLevel != null && workoutTime != null) {
@@ -47,136 +27,167 @@ class _PreferenceScreenState extends State<PreferenceScreen>
         'activityLevel': activityLevel,
         'workoutTime': workoutTime,
       });
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
+
+      // ✅ Tampilkan snackbar custom
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.check_circle, color: Colors.white),
+              const SizedBox(width: 12),
+              Text(
+                'Preferences saved successfully!',
+                style: GoogleFonts.inter(color: Colors.white),
+              ),
+            ],
+          ),
+          backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          duration: const Duration(seconds: 2),
+        ),
       );
+
+      // ⏳ Tunggu sedikit sebelum pindah halaman
+      await Future.delayed(const Duration(milliseconds: 1600));
+
+      // 🔁 Pindah ke halaman Login
+      if (context.mounted) {
+        Navigator.pushReplacement(
+          context,
+          CupertinoPageRoute(builder: (_) => const LoginScreen()),
+        );
+      }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill all preferences')),
+        const SnackBar(content: Text('Please complete all preferences')),
       );
     }
   }
 
-  Widget _buildCard({
-    required String title,
-    required List<String> options,
-    required String? selectedValue,
-    required void Function(String?) onChanged,
+
+  Widget _buildDropdown({
+    required String label,
+    required IconData icon,
+    required String? value,
+    required List<String> items,
+    required ValueChanged<String?> onChanged,
   }) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 400),
-      curve: Curves.easeInOut,
-      margin: const EdgeInsets.symmetric(vertical: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.blue.withOpacity(0.1),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-          )
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title,
-              style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.w600, fontSize: 16, color: Colors.blue[900])),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            children: options.map((option) {
-              final selected = option == selectedValue;
-              return ChoiceChip(
-                label: Text(option, style: GoogleFonts.poppins()),
-                selected: selected,
-                onSelected: (_) => onChanged(option),
-                selectedColor: Colors.blue.shade200,
-                backgroundColor: Colors.grey.shade100,
-                labelStyle: TextStyle(
-                  color: selected ? Colors.white : Colors.black87,
-                ),
-              );
-            }).toList(),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.inter(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: Colors.black87,
           ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 6),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey.shade300),
+            borderRadius: BorderRadius.circular(14),
+            color: Colors.white,
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: value,
+              icon: const Icon(Icons.arrow_drop_down_rounded),
+              isExpanded: true,
+              hint: Text('Select $label'),
+              style: GoogleFonts.inter(fontSize: 14, color: Colors.black),
+              onChanged: onChanged,
+              items: items.map((item) {
+                return DropdownMenuItem(
+                  value: item,
+                  child: Row(
+                    children: [
+                      Icon(icon, size: 16, color: Colors.blueAccent),
+                      const SizedBox(width: 10),
+                      Text(item),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+        ),
+        const SizedBox(height: 20),
+      ],
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.blue.shade50,
+      backgroundColor: const Color(0xFFF6F7F9),
       appBar: AppBar(
-        backgroundColor: Colors.blue.shade500,
-        elevation: 0,
-        title: Text(
-          'Your Preferences',
-          style: GoogleFonts.poppins(
-              fontSize: 18, fontWeight: FontWeight.w600, color: Colors.white),
-        ),
         centerTitle: true,
+        backgroundColor: Colors.white,
+        elevation: 0.5,
+        title: Text(
+          'Preferences',
+          style: GoogleFonts.inter(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+          ),
+        ),
       ),
-      body: FadeTransition(
-        opacity: _fadeIn,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              AnimatedBuilder(
-                animation: _controller,
-                builder: (_, child) => Transform.scale(
-                  scale: 0.9 + (_controller.value * 0.1),
-                  child: Icon(Icons.auto_awesome, size: 60, color: Colors.blue.shade400),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 500),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildDropdown(
+                  label: "What's your goal?",
+                  icon: Icons.fitness_center,
+                  value: goal,
+                  items: goals,
+                  onChanged: (val) => setState(() => goal = val),
                 ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                'Let\'s set your preferences\nto personalize your FitTrack experience!',
-                style: GoogleFonts.poppins(fontSize: 16, color: Colors.blue.shade800),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 20),
-              _buildCard(
-                title: 'What is your health goal?',
-                options: goals,
-                selectedValue: goal,
-                onChanged: (value) => setState(() => goal = value),
-              ),
-              _buildCard(
-                title: 'How active are you?',
-                options: activityLevels,
-                selectedValue: activityLevel,
-                onChanged: (value) => setState(() => activityLevel = value),
-              ),
-              _buildCard(
-                title: 'When do you usually work out?',
-                options: workoutTimes,
-                selectedValue: workoutTime,
-                onChanged: (value) => setState(() => workoutTime = value),
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _savePreferences,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue.shade600,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20)),
+                _buildDropdown(
+                  label: "Activity Level",
+                  icon: Icons.directions_walk,
+                  value: activityLevel,
+                  items: activityLevels,
+                  onChanged: (val) => setState(() => activityLevel = val),
                 ),
-                child: Text(
-                  'Save & Continue',
-                  style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.w600, fontSize: 16),
+                _buildDropdown(
+                  label: "Workout Time",
+                  icon: Icons.access_time,
+                  value: workoutTime,
+                  items: workoutTimes,
+                  onChanged: (val) => setState(() => workoutTime = val),
                 ),
-              ),
-            ],
+                const SizedBox(height: 30),
+                ElevatedButton(
+                  onPressed: _savePreferences,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blueAccent,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: Text(
+                    'Save Preferences',
+                    style: GoogleFonts.inter(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

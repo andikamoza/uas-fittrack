@@ -39,6 +39,7 @@ dependencies:
   google_fonts: ^6.1.0
   flutter_animate: ^4.3.0
   lottie: ^3.0.0
+  animated_toggle_switch: ^0.6.0
 
  # State & Routing
   provider: ^6.1.2
@@ -86,6 +87,7 @@ flutter:
   assets:
     - assets/lottie/
     - assets/images/
+    - assets/icons/
 
 
   # An image asset can refer to one or more resolution-specific "variants", see

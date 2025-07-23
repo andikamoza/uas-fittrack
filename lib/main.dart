@@ -4,15 +4,12 @@ import 'package:provider/provider.dart';
 
 import 'firebase_options.dart';
 import 'utils/app_theme.dart';
-import 'utils/theme_provider.dart'; // Tambahkan ini
+import 'utils/theme_provider.dart';
 import 'services/preference_service.dart';
 
 import 'screens/onboarding/onboarding_screen.dart';
 import 'screens/auth/login_screen.dart';
-import 'screens/home/dashboard_screen.dart';
-
-import 'package:fittrack/services/preference_service.dart';
-
+import 'widgets/custom_bottom_nav.dart'; // <- diperbaiki, dari widgets
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -55,15 +52,15 @@ class _RootPageState extends State<RootPage> {
   late Future<Widget> _checkStatus;
 
   Future<Widget> _determineStartPage() async {
-    bool seenOnboarding = await PreferenceService.getOnboardingSeen() ?? false;
-    bool isLoggedIn = await PreferenceService.getLoginStatus() ?? false;
+    final seenOnboarding = await PreferenceService.getOnboardingSeen() ?? false;
+    final isLoggedIn = await PreferenceService.getLoginStatus() ?? false;
 
     if (!seenOnboarding) {
       return const OnboardingScreen();
     } else if (!isLoggedIn) {
       return const LoginScreen();
     } else {
-      return const DashboardScreen();
+      return const CustomBottomNav(); // ← ganti ke bottom nav yang benar
     }
   }
 
@@ -93,4 +90,3 @@ class _RootPageState extends State<RootPage> {
     );
   }
 }
-
