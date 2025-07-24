@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:fittrack/screens/main/dashboard_screen.dart';
-import 'package:fittrack/screens/main/profile_screen.dart';
+import '../screens/main/dashboard_screen.dart';
+import '../screens/main/reminder_screen.dart';
+import '../screens/main/chat_screen.dart';
+import '../screens/main/profile_screen.dart';
 
 class CustomBottomNav extends StatefulWidget {
   const CustomBottomNav({super.key});
@@ -10,32 +12,37 @@ class CustomBottomNav extends StatefulWidget {
 }
 
 class _CustomBottomNavState extends State<CustomBottomNav> {
-  int _selectedIndex = 0;
+  int _currentIndex = 0;
 
   final List<Widget> _pages = const [
     DashboardScreen(),
+    ReminderScreen(),
+    ChatScreen(),
     ProfileScreen(),
   ];
-
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _pages[_selectedIndex],
+      body: _pages[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        selectedItemColor: Colors.blue,
+        currentIndex: _currentIndex,
+        selectedItemColor: Colors.blueAccent,
         unselectedItemColor: Colors.grey,
-        onTap: _onItemTapped,
+        onTap: (index) => setState(() => _currentIndex = index),
+        type: BottomNavigationBarType.fixed,
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard),
-            label: 'Dashboard',
+            icon: Icon(Icons.show_chart),
+            label: 'Chart',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.notifications_active),
+            label: 'Reminder',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.chat_bubble_outline),
+            label: 'Chat',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person),
