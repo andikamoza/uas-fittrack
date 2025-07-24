@@ -7,9 +7,14 @@ import 'utils/app_theme.dart';
 import 'utils/theme_provider.dart';
 import 'services/preference_service.dart';
 
+// Screens
 import 'screens/onboarding/onboarding_screen.dart';
 import 'screens/auth/login_screen.dart';
-import 'widgets/custom_bottom_nav.dart'; // <- diperbaiki, dari widgets
+import 'screens/auth/register_screen.dart';
+import 'screens/auth/forgot_password_screen.dart';
+
+// Widget Bottom Navigation (anggap ini berisi MainScreen)
+import 'widgets/custom_bottom_nav.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -35,6 +40,12 @@ class FitTrackApp extends StatelessWidget {
           theme: AppTheme.lightTheme,
           darkTheme: AppTheme.darkTheme,
           home: const RootPage(),
+          routes: {
+            '/login': (context) => const LoginScreen(),
+            '/register': (context) => const RegisterScreen(),
+            '/forgot-password': (context) => const ForgotPasswordScreen(),
+            '/main': (context) => const CustomBottomNav(),
+          },
         );
       },
     );
@@ -60,7 +71,7 @@ class _RootPageState extends State<RootPage> {
     } else if (!isLoggedIn) {
       return const LoginScreen();
     } else {
-      return const CustomBottomNav(); // ← ganti ke bottom nav yang benar
+      return const CustomBottomNav();
     }
   }
 

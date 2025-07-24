@@ -1,10 +1,8 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:fittrack/screens/auth/register_screen.dart';
-import 'package:fittrack/screens/main/main_screen.dart';
-import 'package:fittrack/widgets/custom_bottom_nav.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../../components/google_sign_in_button.dart';
+import 'forgot_password_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -14,83 +12,166 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final emailController = TextEditingController();
-  final passwordController = TextEditingController();
-  bool _isLoading = false;
   final _formKey = GlobalKey<FormState>();
+  final TextEditingController _email = TextEditingController();
+  final TextEditingController _password = TextEditingController();
+  bool _obscurePassword = true;
+  bool _loading = false;
 
   Future<void> _login() async {
     if (_formKey.currentState!.validate()) {
-      setState(() => _isLoading = true);
+      setState(() => _loading = true);
       try {
         await FirebaseAuth.instance.signInWithEmailAndPassword(
-          email: emailController.text.trim(),
-          password: passwordController.text.trim(),
+          email: _email.text.trim(),
+          password: _password.text.trim(),
         );
-        Navigator.pushReplacement(
-          context,
-          CupertinoPageRoute(builder: (_) => const MainScreen()),
-        );
+
+        // ✅ Navigasi ke MainScreen setelah login berhasil
+        Navigator.pushReplacementNamed(context, '/main');
       } on FirebaseAuthException catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message ?? 'Login failed')),
+          SnackBar(
+            content: Text(e.message ?? 'Login failed'),
+            backgroundColor: Colors.red,
+          ),
         );
       } finally {
-        setState(() => _isLoading = false);
+        setState(() => _loading = false);
       }
     }
   }
 
   @override
+  void dispose() {
+    _email.dispose();
+    _password.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return CupertinoPageScaffold(
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Form(
-            key: _formKey,
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
             child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Spacer(),
                 Text(
-                  'Welcome Back 👋',
+                  'Login',
                   style: GoogleFonts.inter(
-                    fontSize: 24,
+                    fontSize: 28,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 16),
-                CupertinoTextField(
-                  controller: emailController,
-                  placeholder: 'Email',
-                  keyboardType: TextInputType.emailAddress,
-                  padding: const EdgeInsets.all(16),
-                ),
-                const SizedBox(height: 12),
-                CupertinoTextField(
-                  controller: passwordController,
-                  placeholder: 'Password',
-                  obscureText: true,
-                  padding: const EdgeInsets.all(16),
+                const SizedBox(height: 24),
+                Form(
+                  key: _formKey,
+                  child: Column(
+                    children: [
+                      TextFormField(
+                        controller: _email,
+                        keyboardType: TextInputType.emailAddress,
+                        decoration: InputDecoration(
+                          labelText: 'Email',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        validator: (val) =>
+                        val == null || !val.contains('@')
+                            ? 'Enter a valid email'
+                            : null,
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _password,
+                        obscureText: _obscurePassword,
+                        decoration: InputDecoration(
+                          labelText: 'Password',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscurePassword
+                                  ? Icons.visibility_off
+                                  : Icons.visibility,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _obscurePassword = !_obscurePassword;
+                              });
+                            },
+                          ),
+                        ),
+                        validator: (val) =>
+                        val == null || val.length < 6
+                            ? 'Password too short'
+                            : null,
+                      ),
+                      const SizedBox(height: 12),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) =>
+                                  const ForgotPasswordScreen()),
+                            );
+                          },
+                          child: Text(
+                            'Forgot Password?',
+                            style: GoogleFonts.inter(),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 24),
-                CupertinoButton.filled(
-                  onPressed: _isLoading ? null : _login,
-                  child: _isLoading
-                      ? const CupertinoActivityIndicator()
-                      : const Text('Login'),
+                _loading
+                    ? const CircularProgressIndicator()
+                    : ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blueAccent,
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 14,
+                      horizontal: 60, // 🔵 Tidak selebar layar
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  onPressed: _login,
+                  child: Text(
+                    'Login',
+                    style: GoogleFonts.inter(
+                      color: Colors.white,
+                      fontSize: 16,
+                    ),
+                  ),
                 ),
+                const SizedBox(height: 16),
+
+                // 🔵 Tombol Google Sign-In (optional / dummy)
+                const GoogleSignInButton(),
+
                 const SizedBox(height: 12),
                 TextButton(
                   onPressed: () {
-                    Navigator.push(
-                      context,
-                      CupertinoPageRoute(builder: (_) => const RegisterScreen()),
-                    );
+                    Navigator.pushNamed(context, '/register');
                   },
-                  child: const Text("Don't have an account? Register"),
+                  child: Text(
+                    'Don’t have an account? Register',
+                    style: GoogleFonts.inter(),
+                  ),
                 ),
-                const Spacer(),
               ],
             ),
           ),

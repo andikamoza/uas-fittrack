@@ -21,12 +21,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final List<Map<String, String>> onboardingData = [
     {
       "title": "Track Your Health",
-      "desc": "Monitor your fitness, sleep, and more in one place.",
+      "desc": "Monitor your fitness in one place.",
       "asset": "assets/lottie/Chart.json",
     },
     {
       "title": "Daily Health Reminders",
-      "desc": "Get notified for meals, workouts, and check-ups.",
+      "desc": "Get notified for workouts.",
       "asset": "assets/lottie/Alarm.json",
     },
     {
