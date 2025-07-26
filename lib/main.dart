@@ -41,6 +41,7 @@ class FitTrackApp extends StatelessWidget {
           darkTheme: AppTheme.darkTheme,
           home: CustomBottomNav(),
           routes: {
+            '/onboarding': (context) => const OnboardingScreen(),
             '/login': (context) => const LoginScreen(),
             '/register': (context) => const RegisterScreen(),
             '/forgot-password': (context) => const ForgotPasswordScreen(),
