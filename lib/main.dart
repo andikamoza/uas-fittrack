@@ -12,10 +12,10 @@ import 'screens/onboarding/onboarding_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
 import 'screens/auth/forgot_password_screen.dart';
+import 'screens/articles/article_detail_screen.dart';
 
 // Widget Bottom Navigation (anggap ini berisi MainScreen)
 import 'widgets/custom_bottom_nav.dart';
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
@@ -45,6 +45,7 @@ class FitTrackApp extends StatelessWidget {
             '/login': (context) => const LoginScreen(),
             '/register': (context) => const RegisterScreen(),
             '/forgot-password': (context) => const ForgotPasswordScreen(),
+            '/article-detail': (context) => const ArticleDetailScreen(),
             '/main': (context) => const CustomBottomNav(),
           },
         );

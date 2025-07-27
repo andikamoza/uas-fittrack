@@ -1,7 +1,14 @@
+// File: lib/screens/dashboard/dashboard_screen.dart
+
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+
+import '../../models/user_preference.dart';
+import '../../services/firestore_service.dart';
+import '../../services/share_pref_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -12,7 +19,12 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   final TextEditingController _durationController = TextEditingController();
+  final _firestoreService = FirestoreService();
+  final _sharedPrefService = SharedPrefService();
+
   String _selectedWorkout = 'Running';
+  List<List<double>> weeklyCalories = List.generate(7, (_) => []);
+  List<List<String>> weeklyWorkoutType = List.generate(7, (_) => []);
 
   final Map<String, double> _calorieRates = {
     'Running': 10,
@@ -35,10 +47,33 @@ class _DashboardScreenState extends State<DashboardScreen> {
     'Walking': Colors.orange,
   };
 
-  List<List<double>> weeklyCalories = List.generate(7, (_) => []);
-  List<List<String>> weeklyWorkoutType = List.generate(7, (_) => []);
+  @override
+  void initState() {
+    super.initState();
+    _loadUserPreferences();
+    _loadWorkoutLogs();
+  }
 
-  void _addWorkoutToChart() async {
+  Future<void> _loadUserPreferences() async {
+    final pref = await _sharedPrefService.getUserPreference();
+    if (pref != null) {
+      await _firestoreService.savePreferenceToFirestore(pref);
+    }
+  }
+
+  Future<void> _loadWorkoutLogs() async {
+    final logs = await _firestoreService.getWorkoutLogs();
+    for (var log in logs) {
+      final date = (log['createdAt'] as Timestamp).toDate();
+      final weekday = date.weekday % 7;
+      setState(() {
+        weeklyCalories[weekday].add((log['calories'] as num).toDouble());
+        weeklyWorkoutType[weekday].add(log['type'] as String);
+      });
+    }
+  }
+
+  Future<void> _addWorkoutToChart() async {
     final durationText = _durationController.text.trim();
     final duration = double.tryParse(durationText);
     if (duration == null || duration <= 0) return;
@@ -46,28 +81,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final calorieRate = _calorieRates[_selectedWorkout]!;
     final calories = duration * calorieRate;
     final weekday = DateTime.now().weekday % 7;
+    final now = Timestamp.now();
 
     setState(() {
       weeklyCalories[weekday].add(calories);
       weeklyWorkoutType[weekday].add(_selectedWorkout);
     });
 
-    try {
-      await FirebaseFirestore.instance.collection('workouts').add({
-        'type': _selectedWorkout,
-        'duration': duration,
-        'calories': calories,
-        'createdAt': Timestamp.now(),
-      });
+    final workoutData = {
+      'type': _selectedWorkout,
+      'duration': duration,
+      'calories': calories,
+      'createdAt': now,
+    };
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Workout successfully logged!')),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to log workout: $e')),
-      );
-    }
+    await _firestoreService.saveWorkoutLog(workoutData);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Workout successfully logged!')),
+    );
 
     _durationController.clear();
   }
@@ -104,226 +136,234 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
-        child: ListView(
-          children: [
-            const Text("Log Workout", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 2)),
-                ],
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              _buildWorkoutForm(),
+              const SizedBox(height: 24),
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: Text("Your Weekly Reports", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               ),
-              child: Column(
-                children: [
-                  DropdownButtonFormField<String>(
-                    value: _selectedWorkout,
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      labelText: "Workout Type",
-                    ),
-                    items: _calorieRates.keys.map((workout) {
-                      return DropdownMenuItem(
-                        value: workout,
-                        child: Row(
-                          children: [
-                            Icon(_workoutIcons[workout], color: Colors.blue),
-                            const SizedBox(width: 8),
-                            Text(workout),
-                          ],
-                        ),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      if (value != null) {
-                        setState(() => _selectedWorkout = value);
-                      }
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: _durationController,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: 'Duration (min)',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: _addWorkoutToChart,
-                      icon: const Icon(Icons.add),
-                      label: const Text("Add Workout"),
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+              const SizedBox(height: 12),
+              _buildBarChart(weekDays),
+              const SizedBox(height: 24),
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: Text("Latest Articles", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               ),
-            ),
-            const SizedBox(height: 24),
-            const Text("Calories Burned (kcal)", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 12),
-            LayoutBuilder(
-              builder: (context, constraints) {
-                return Container(
-                  height: 250,
-                  width: constraints.maxWidth,
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 6)],
-                  ),
-                  child: BarChart(
-                    BarChartData(
-                      alignment: BarChartAlignment.spaceAround,
-                      maxY: getMaxY(),
-                      titlesData: FlTitlesData(
-                        bottomTitles: AxisTitles(
-                          sideTitles: SideTitles(
-                            showTitles: true,
-                            getTitlesWidget: (value, _) {
-                              int index = value.toInt();
-                              return Text(
-                                weekDays[index % 7],
-                                style: const TextStyle(fontSize: 10),
-                              );
-                            },
-                          ),
-                        ),
-                        leftTitles: AxisTitles(
-                          sideTitles: SideTitles(
-                            showTitles: true,
-                            interval: 50,
-                            reservedSize: 36,
-                            getTitlesWidget: (value, _) =>
-                                Text("${value.toInt()} kcal", style: const TextStyle(fontSize: 10)),
-                          ),
-                        ),
-                        topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                        rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                      ),
-                      gridData: FlGridData(show: true),
-                      borderData: FlBorderData(show: false),
-                      barGroups: List.generate(7, (dayIndex) {
-                        return BarChartGroupData(
-                          x: dayIndex,
-                          barRods: List.generate(weeklyCalories[dayIndex].length, (entryIndex) {
-                            final type = weeklyWorkoutType[dayIndex][entryIndex];
-                            return BarChartRodData(
-                              toY: weeklyCalories[dayIndex][entryIndex],
-                              color: _workoutColors[type] ?? Colors.blue,
-                              width: 8,
-                              borderRadius: BorderRadius.circular(4),
-                            );
-                          }),
-                          barsSpace: 4,
-                        );
-                      }),
-                    ),
-                  ),
-                );
-              },
-            ),
-            const SizedBox(height: 24),
-            const Text("Health Articles", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 12),
-            StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('articles')
-                  .orderBy('createdAt', descending: true)
-                  .limit(10)
-                  .snapshots(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-
-                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                  return const Text("No articles available.");
-                }
-
-                return Column(
-                  children: snapshot.data!.docs.map((doc) {
-                    final data = doc.data() as Map<String, dynamic>;
-                    return ArticleCard(
-                      title: data['title'] ?? 'No Title',
-                      imageUrl: data['imageUrl'] ?? '',
-                      onTap: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text("Opening: ${data['title']}")),
-                        );
-                      },
-                    );
-                  }).toList(),
-                );
-              },
-            ),
-          ],
+              const SizedBox(height: 12),
+              _buildArticlesList(),
+            ],
+          ),
         ),
       ),
     );
   }
-}
 
-class ArticleCard extends StatelessWidget {
-  final String title;
-  final String imageUrl;
-  final VoidCallback onTap;
-
-  const ArticleCard({
-    super.key,
-    required this.title,
-    required this.imageUrl,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      elevation: 3,
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Row(
-          children: [
-            ClipRRect(
-              borderRadius: const BorderRadius.horizontal(left: Radius.circular(16)),
-              child: Image.network(
-                imageUrl,
-                width: 100,
-                height: 80,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => const Icon(Icons.broken_image, size: 60),
+  Widget _buildWorkoutForm() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 2))],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text("Log Workout", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 12),
+          DropdownButtonFormField<String>(
+            value: _selectedWorkout,
+            isExpanded: true,
+            decoration: InputDecoration(
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              filled: true,
+              fillColor: Colors.grey[100],
+              labelText: "Workout Type",
+            ),
+            items: _calorieRates.keys.map((workout) {
+              return DropdownMenuItem(
+                value: workout,
+                child: Row(
+                  children: [
+                    Icon(_workoutIcons[workout], color: Colors.blue),
+                    const SizedBox(width: 8),
+                    Text(workout),
+                  ],
+                ),
+              );
+            }).toList(),
+            onChanged: (value) {
+              if (value != null) setState(() => _selectedWorkout = value);
+            },
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _durationController,
+            keyboardType: TextInputType.number,
+            decoration: InputDecoration(
+              labelText: 'Duration (min)',
+              filled: true,
+              fillColor: Colors.grey[100],
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: _addWorkoutToChart,
+              icon: const Icon(Icons.add),
+              label: const Text("Add Workout"),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                backgroundColor: Colors.blue,
               ),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
-                child: Text(
-                  title,
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBarChart(List<String> weekDays) {
+    return Container(
+      height: 260,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 2))],
+      ),
+      child: BarChart(
+        BarChartData(
+          maxY: getMaxY(),
+          barTouchData: BarTouchData(enabled: false),
+          titlesData: FlTitlesData(
+            bottomTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                getTitlesWidget: (value, _) => Text(
+                  weekDays[value.toInt() % 7],
+                  style: const TextStyle(fontSize: 9),
                 ),
               ),
             ),
-            const Icon(Icons.arrow_forward_ios, size: 16),
-            const SizedBox(width: 8),
-          ],
+            leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          ),
+          borderData: FlBorderData(show: false),
+          barGroups: List.generate(7, (dayIndex) {
+            return BarChartGroupData(
+              x: dayIndex,
+              barRods: List.generate(weeklyCalories[dayIndex].length, (entryIndex) {
+                final type = weeklyWorkoutType[dayIndex][entryIndex];
+                final value = weeklyCalories[dayIndex][entryIndex];
+                return BarChartRodData(
+                  toY: value,
+                  color: _workoutColors[type] ?? Colors.blue,
+                  width: 10,
+                  borderRadius: BorderRadius.circular(6),
+                );
+              }),
+            );
+          }),
         ),
       ),
+    );
+  }
+
+  Widget _buildArticlesList() {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('articles')
+          .orderBy('createdAt', descending: true)
+          .limit(10)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return const Text("No articles available.");
+        }
+
+        return Column(
+          children: snapshot.data!.docs.map((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            final createdAt = (data['createdAt'] as Timestamp?)?.toDate();
+            final formattedDate = createdAt != null ? DateFormat('MMM dd, yyyy').format(createdAt) : 'Unknown';
+
+            return Card(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              margin: const EdgeInsets.only(bottom: 16),
+              elevation: 4,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if ((data['imageUrl'] as String?)?.isNotEmpty ?? false)
+                    ClipRRect(
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                      child: Image.network(
+                        data['imageUrl'],
+                        width: double.infinity,
+                        height: 160,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          color: Colors.grey[300],
+                          height: 160,
+                          alignment: Alignment.center,
+                          child: const Icon(Icons.broken_image),
+                        ),
+                      ),
+                    ),
+                  Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          data['title'] ?? 'No Title',
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 4),
+                        Text("By Andika · Published on $formattedDate", style: const TextStyle(color: Colors.grey)),
+                        const SizedBox(height: 8),
+                        Text(
+                          (data['content'] as String?)?.split("\n").first ?? '',
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 8),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              Navigator.pushNamed(context, '/article-detail', arguments: data);
+                            },
+                            style: ElevatedButton.styleFrom(
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              backgroundColor: Colors.blue,
+                            ),
+                            child: const Text("More →", style: TextStyle(color: Colors.white)),
+                          ),
+                        )
+                      ],
+                    ),
+                  )
+                ],
+              ),
+            );
+          }).toList(),
+        );
+      },
     );
   }
 }
