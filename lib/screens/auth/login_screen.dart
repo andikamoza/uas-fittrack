@@ -27,7 +27,6 @@ class _LoginScreenState extends State<LoginScreen> {
           password: _password.text.trim(),
         );
 
-        // ✅ Navigasi ke MainScreen setelah login berhasil
         Navigator.pushReplacementNamed(context, '/main');
       } on FirebaseAuthException catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -77,12 +76,13 @@ class _LoginScreenState extends State<LoginScreen> {
                         keyboardType: TextInputType.emailAddress,
                         decoration: InputDecoration(
                           labelText: 'Email',
+                          hintText: 'Enter your email',
+                          prefixIcon: const Icon(Icons.email_outlined),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(14),
                           ),
                         ),
-                        validator: (val) =>
-                        val == null || !val.contains('@')
+                        validator: (val) => val == null || !val.contains('@')
                             ? 'Enter a valid email'
                             : null,
                       ),
@@ -92,6 +92,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         obscureText: _obscurePassword,
                         decoration: InputDecoration(
                           labelText: 'Password',
+                          hintText: 'Enter your password',
+                          prefixIcon: const Icon(Icons.lock_outline),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(14),
                           ),
@@ -108,8 +110,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             },
                           ),
                         ),
-                        validator: (val) =>
-                        val == null || val.length < 6
+                        validator: (val) => val == null || val.length < 6
                             ? 'Password too short'
                             : null,
                       ),
@@ -142,7 +143,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     backgroundColor: Colors.blueAccent,
                     padding: const EdgeInsets.symmetric(
                       vertical: 14,
-                      horizontal: 60, // 🔵 Tidak selebar layar
+                      horizontal: 60,
                     ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
@@ -158,10 +159,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-
-                // 🔵 Tombol Google Sign-In (optional / dummy)
                 const GoogleSignInButton(),
-
                 const SizedBox(height: 12),
                 TextButton(
                   onPressed: () {
