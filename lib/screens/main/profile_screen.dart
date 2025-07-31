@@ -13,10 +13,8 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   final user = FirebaseAuth.instance.currentUser;
   final _formKey = GlobalKey<FormState>();
-
   final TextEditingController _nameController = TextEditingController();
   String _gender = 'Male';
-
   bool _isLoading = true;
 
   @override
@@ -27,14 +25,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   void _loadUserProfile() async {
     if (user == null) return;
-
     final doc = await FirebaseFirestore.instance.collection('users').doc(user!.uid).get();
     if (doc.exists) {
       final data = doc.data()!;
       _nameController.text = data['fullName'] ?? '';
       _gender = data['gender'] ?? 'Male';
     }
-
     setState(() {
       _isLoading = false;
     });
@@ -58,8 +54,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _logout(BuildContext context, String route) async {
-    await FirebaseAuth.instance.signOut();
-    Navigator.of(context).pushNamedAndRemoveUntil(route, (route) => false);
+    final shouldLogout = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Confirm Logout"),
+        content: const Text("Are you sure you want to logout?"),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text("Cancel")),
+          ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: const Text("Yes")),
+        ],
+      ),
+    );
+
+    if (shouldLogout ?? false) {
+      await FirebaseAuth.instance.signOut();
+      Navigator.of(context).pushNamedAndRemoveUntil(route, (route) => false);
+    }
   }
 
   void _showLogoutOptions(BuildContext context) {
@@ -118,11 +128,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("My Profile"),
+        title: const Text(
+          "My Profile",
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
+          ),
+        ),
         centerTitle: true,
         backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
         elevation: 1,
+        iconTheme: const IconThemeData(color: Colors.black),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
@@ -189,14 +205,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 icon: const Icon(Icons.save),
                 label: const Text("Save Changes"),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
+                  backgroundColor: Colors.blue,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  textStyle: const TextStyle(fontWeight: FontWeight.bold),
                 ),
               ),
               const SizedBox(height: 16),
               ListTile(
-                leading: const Icon(Icons.contact_mail_outlined, color: Colors.blue),
+                leading: Image.asset(
+                  'assets/icons/github.png',
+                  width: 28,
+                  height: 28,
+                ),
                 title: const Text("Contact Us via GitHub"),
                 trailing: const Icon(Icons.open_in_new),
                 onTap: _launchGitHub,

@@ -30,7 +30,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       "asset": "assets/lottie/Alarm.json",
     },
     {
-      "title": "Consult with Doctors",
+      "title": "Consult with Coach",
       "desc": "Get quick advice from certified professionals.",
       "asset": "assets/lottie/Doctor.json",
     },
