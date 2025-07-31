@@ -37,9 +37,10 @@
 
 ## 🚀 Cara Menjalankan
 
-1. Clone repositori ini
-2. Jalankan `flutter pub get`
-3. Jalankan aplikasi: `flutter run -d chrome` atau emulator/device lain
+1. Clone repositori ini  `https://github.com/andikamoza/uas-fittrack.git`
+2. Ubah direktori `cd uas-fittrack`
+3. Jalankan `flutter pub get`
+4. Jalankan aplikasi: `flutter run -d chrome` atau emulator/device lain
 
 ---
 
