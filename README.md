@@ -31,7 +31,19 @@
 ---
 
 ## 📸 Screenshot Aplikasi
-(Sertakan minimal 3 screenshot seperti: Onboarding, Dashboard, Chat)
+![Tampilan Home](assets/screenshoots/onboarding-1.png)
+![Tampilan Home](assets/screenshoots/onboarding-2.png)
+![Tampilan Home](assets/screenshoots/onboarding-3.png)
+![Tampilan Home](assets/screenshoots/preference.png)
+![Tampilan Home](assets/screenshoots/register.png)
+![Tampilan Home](assets/screenshoots/login.png)
+![Tampilan Home](assets/screenshoots/forgot-pw.png)
+![Tampilan Home](assets/screenshoots/dashboard.png)
+![Tampilan Home](assets/screenshoots/article.png)
+![Tampilan Home](assets/screenshoots/reminder.png)
+![Tampilan Home](assets/screenshoots/select-coach.png)
+![Tampilan Home](assets/screenshoots/chat.png)
+![Tampilan Home](assets/screenshoots/profile.png)
 
 ---
 
