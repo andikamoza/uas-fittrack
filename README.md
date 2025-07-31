@@ -1,7 +1,7 @@
 # 🏋️‍♂️ FitTrack – Aplikasi Pelacak Kebugaran
 
 ## 📌 Deskripsi Singkat
-**FitTrack** adalah aplikasi mobile yang dirancang untuk membantu pengguna melacak kebugaran dan gaya hidup sehat. FitTrack menyediakan fitur seperti pengingat aktivitas, grafik kalori, chat dengan pelatih, dan artikel kesehatan. Aplikasi ini memiliki antarmuka modern bergaya iOS dan menggunakan Firebase untuk autentikasi dan penyimpanan data.
+**FitTrack** adalah aplikasi yang dirancang untuk membantu pengguna melacak kebugaran dan gaya hidup sehat. FitTrack menyediakan fitur seperti pengingat aktivitas, grafik kalori, chat dengan pelatih, dan artikel kesehatan. Aplikasi ini memiliki antarmuka modern bergaya iOS dan menggunakan Firebase untuk autentikasi dan penyimpanan data.
 
 ---
 
@@ -22,9 +22,9 @@
 - ✅ **Shared Preferences**  
   Menyimpan tema aplikasi
 - ✅ **Firebase Authentication**  
-  Untuk login, register
+  Untuk login dan register
 - ✅ **Cloud Firestore**  
-  Menyimpan reminder, artikel, riwayat chat, profile pengguna
+  Menyimpan reminder, artikel, riwayat chat, dan profile pengguna
 - ✅ **Lottie & Flutter Animation**  
   Digunakan pada onboarding dan transisi antar halaman
 
@@ -34,6 +34,25 @@
 (Sertakan minimal 3 screenshot seperti: Onboarding, Dashboard, Chat)
 
 ---
+
+## 🚀 Cara Menjalankan
+
+1. Clone repositori ini
+2. Jalankan `flutter pub get`
+3. Jalankan aplikasi: `flutter run -d chrome` atau emulator/device lain
+
+---
+
+
+## 🧑‍💻 Kontributor
+
+- **Nama     : Andika Moza Varian**
+- **NPM      : 2022804134**
+- **Prodi    : Sistem Informasi**
+- **Semester : 6A Pagi**
+
+---
+
 
 ## 📁 Struktur Folder (Ringkasan)
 ```bash
